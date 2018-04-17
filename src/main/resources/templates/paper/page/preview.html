@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="include/commomcss::commonHead('单选管理')"></head>
+<script th:inline="javascript">
+    $(function() {
+        var id = [[${id}]];
+        $.ajax({
+            url: "/paper/query/"+id,
+            type: "post",
+            dataType: "json",
+            success : function(data){
+                var count = 1;
+                $("#paperName").text("试卷名称"+data.paperconfig.papername+"<br/>");
+                $("#questionList").append("单选<hr/>")
+                $.each(data.scqs,function(i,j){
+                    $("#questionList").append(count+++")"+j.scqtext+"<br/>");
+                    $("#questionList").append("A:"+j.answera);
+                    $("#questionList").append("B:"+j.answerb);
+                    $("#questionList").append("C:"+j.answerc);
+                    $("#questionList").append("D:"+j.answerd);
+                    $("#questionList").append("答案:"+j.answer+"<br>");
+                });
+                $("#questionList").append("<hr/>")
+                $("#questionList").append("多选<hr/>")
+                $.each(data.mcqs,function(i,j){
+                    $("#questionList").append(count+++")"+j.mcqtext+"<br />");
+                    $("#questionList").append("A:"+j.answera);
+                    $("#questionList").append("B:"+j.answerb);
+                    $("#questionList").append("C:"+j.answerc);
+                    $("#questionList").append("D:"+j.answerd);
+                    $("#questionList").append("答案:"+j.answer+"<br>");
+                });
+                $("#questionList").append("<hr/>")
+                $("#questionList").append("判断<hr/>")
+                $.each(data.tfqs,function(i,j){
+                    $("#questionList").append(count+++")"+j.tfqtext+"<br />");
+                    $("#questionList").append("答案"+j.tfqanswer+"<br>");
+                });
+                $("#questionList").append("<hr/>")
+            },
+            error : function(){
+                alert("获取试卷信息错误")
+            }
+        });
+    })
+</script>
+<body>
+
+    <div id="wrapper">
+
+        <nav th:include="include/nav"/>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">试卷预览</h1>
+                    <div class="panel panel-default">
+                        <div class="panel-heading" th:id="paperName">
+                        </div>
+                        <div class="panel-body">
+                            <div class="row" th:id="questionList">
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <div th:include="include/commonjs::onloadJs"/>
+</body>
+
+</html>

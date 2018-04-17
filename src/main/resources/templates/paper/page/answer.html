@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="include/commomcss::commonHead('单选管理')"></head>
+<script th:inline="javascript">
+    var count = 0;
+    var question;
+    var paperInfo ;
+    var questions = new Array();
+    function showQuestion (){
+        question = questions[count++]
+        $("#questionList").html("");
+        if(count>questions.length) {
+            $("#questionList").append("题目已经做完是否交卷？")
+        }else {
+            $("#questionList").append("<form class='form-group' id='question'>");
+            $("#questionList").append("<div class='form-group'>");
+            if (question.questiontype == 1) {
+                $("#questionList").append(count + ":" + question.scqtext + "<hr/>");
+                $("#questionList").append("<div class='radio' > <label><input type='radio' name='answer' value='A'/>A :" + question.answera + "</label></div>");
+                $("#questionList").append("<div class='radio' > <label><input type='radio' name='answer' value='B'/>B :" + question.answerb + "</label></div>");
+                $("#questionList").append("<div class='radio' > <label><input type='radio' name='answer' value='C'/>C :" + question.answerc + "</label></div>");
+                $("#questionList").append("<div class='radio' > <label><input type='radio' name='answer' value='D'/>D :" + question.answerd + "</label></div>");
+            } else if (question.questiontype == 2) {
+                $("#questionList").append(count + ":" + question.mcqtext + "<hr/>");
+                $("#questionList").append("<div class='checkbox' > <label><input type='checkbox' name='answer' value='A'/>A :" + question.answera + "</label></div>");
+                $("#questionList").append("<div class='checkbox' > <label><input type='checkbox' name='answer' value='B'/>B :" + question.answerb + "</label></div>");
+                $("#questionList").append("<div class='checkbox' > <label><input type='checkbox' name='answer' value='C'/>C :" + question.answerc + "</label></div>");
+                $("#questionList").append("<div class='checkbox' > <label><input type='checkbox' name='answer' value='D'/>D :" + question.answerd + "</label></div>");
+            } else if (question.questiontype == 3) {
+                $("#questionList").append(count + ":" + question.tfqtext + "<hr/>");
+                $("#questionList").append("<div class='radio' > <label><input type='radio' name='answer' value='true'/>对</label></div>");
+                $("#questionList").append("<div class='radio' > <label><input type='radio' name='answer' value='false'/>错 </label></div>");
+            }else if(question.questiontype ==4){
+                $("#questionList").append(count + ":" + question.pqtext + "<hr/>");
+                $("")
+            }
+            $("#questionList").append("</form>");
+        }
+        if(count>questions.length) {
+            $("#next").text("交卷");
+        }
+    }
+    $(function() {
+        var id = [[${id}]];
+        $.ajax({
+            url: "/paper/query/"+id,
+            type: "post",
+            dataType: "json",
+            success : function(data){
+                var count = 1;
+                paperInfo = data;
+                $("#paperName").html("试卷名称"+data.paperconfig.papername);
+                $.each(data.scqs,function(i,j){
+                    questions.push(j);
+                });
+                $.each(data.mcqs,function(i,j){
+                    questions.push(j);
+                });
+                $.each(data.tfqs,function(i,j){
+                    questions.push(j);
+                });
+                showQuestion(data);
+            },
+            error : function(){
+                alert("获取试卷信息错误")
+            }
+        });
+    })
+    $(function(){
+        $("#next").click(function(){
+            var id_array=new Array();
+            $('input[name="answer"]:checked').each(function(){
+                id_array.push($(this).val());//向数组中添加元素
+            });
+            var idstr=id_array.join(',')
+            if($("#next").text()=="交卷"){
+                var r = confirm("确认交卷吗");
+                if(r==true){
+                    $.ajax({
+                        url :"/UAnswer/insert/historyUAnswer",
+                        type: "post",
+                        data: {
+                            paperid: paperInfo.paperid,
+                            userid: "21",
+                        },
+                        success: function (data) {
+                            $("#msg").html("<div class='alert alert-success'>交卷成功</div>").show().delay(1000).fadeOut()
+                            showQuestion();
+                        },
+                        error: function (data) {
+                            $("#msg").html("<div class='alert alert-danger'>交卷失败</div>")
+                        }
+                    });
+                }else{
+                    return false;
+                }
+            }else{
+                $.ajax({
+                    url: "/UAnswer/insert/tempUAnswer",
+                    type: "post",
+                    data: {
+                        paperid: paperInfo.paperid,
+                        userid: "21",
+                        questionid: question.questionid,
+                        uanswer: idstr,
+                    },
+                    success: function (data) {
+                        $("#msg").html("<div class='alert alert-success'>答案保存成功</div>").show().delay(1000).fadeOut()
+                        showQuestion();
+                    },
+                    error: function (data) {
+                        $("#msg").html("<div class='alert alert-danger'>答案保存失败</div>")
+                    }
+                });
+            }
+        });
+        $("#previous").click(function(){
+            if(count>0){
+                count-=2;
+                showQuestion();
+                $("#next").text("下一题");
+            }
+        });
+    })
+</script>
+<body>
+
+    <div id="wrapper">
+
+        <nav th:include="include/nav"/>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">试卷作答</h1>
+                    <div class="panel panel-default">
+                        <div class="panel-heading" th:id="paperName"></div>
+                        <div class="panel-body">
+                            <div class="row" >
+                                <div class="col-lg-12">
+                                    <div class="col-lg-2"></div>
+                                    <div class="col-lg-6" th:id="questionList"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="col-lg-3">
+                                    <button type="button" class="btn btn-outline btn-primary" th:id="previous" >上一题</button>
+                                </div>
+                                <div class="col-lg-6"><div th:id="msg"></div></div>
+                                <div class="col-lg-3">
+                                    <button type="button" class="btn btn-outline btn-primary pull-right" th:id="next" >下一题</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <div th:include="include/commonjs::onloadJs"/>
+</body>
+
+</html>
